@@ -92,9 +92,9 @@ class Transfer : Object {
         yield stream.read_all_async(buffer, Priority.DEFAULT, null, out _);
     }
 
-    public async void do_transfer(File output, uint32 num_bytes) throws Error {
-        var stream = new BufferedOutputStream(yield output.create_async(0));
-
+    public async void do_transfer(OutputStream stream, uint32 num_bytes)
+        throws Error
+    {
         message("Beginning SPI transfer...");
 
         var byte = new uint8[1];

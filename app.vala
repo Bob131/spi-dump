@@ -27,26 +27,35 @@ class app : Application {
         }
 
         var output_file = File.new_for_commandline_arg(output_path);
-        if (output_file.query_exists() && !force) {
-            var resp = Readline.readline(
-                "Warning: File '%s' exists. Overwrite? [y/N] ".printf(
-                output_path));
-            if (resp != null)
-                resp = ((!) resp).down();
-            if (resp == "y" || resp == "yes") {
-                stdout.printf("Aborting\n");
-                return;
-            }
+
+        var can_overwrite = force;
+        if (!can_overwrite && output_file.query_exists()) {
+            FileInfo info;
             try {
-                output_file.delete();
+                info = output_file.query_info(FileAttribute.STANDARD_SIZE, 0);
             } catch (Error e) {
-                error(e.message);
+                error("Cannot access '%s': %s", output_path, e.message);
             }
+            if (info.get_size() == 0)
+                can_overwrite = true;
+            else
+                can_overwrite = false;
+        }
+        if (!can_overwrite)
+            error("File '%s' exists and is non-empty. Use --force to overwrite",
+                output_path);
+
+        OutputStream stream;
+        try {
+            stream = new BufferedOutputStream(
+                output_file.replace(null, false, 0));
+        } catch (Error e) {
+            error("Failed to create '%s': %s", output_path, e.message);
         }
 
         var transfer = new Transfer(tty);
         this.hold();
-        transfer.do_transfer.begin(output_file, (uint32) num_bytes,
+        transfer.do_transfer.begin(stream, (uint32) num_bytes,
             (obj, res) => {
                 try {
                     transfer.do_transfer.end(res);
