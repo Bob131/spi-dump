@@ -1,3 +1,6 @@
+[CCode (cname = "G_OPTION_REMAINING")]
+extern const string OPTION_REMAINING;
+
 [NoReturn]
 [PrintfFormat]
 void error(string message, ...) {
@@ -5,23 +8,30 @@ void error(string message, ...) {
     Posix.exit(1);
 }
 
-class app : Application {
-    bool force = false;
-    uint64 num_bytes = 128;
+class SpiDump : Application {
+    int64 num_bytes = 128;
     string output_path = "eeprom.bin";
+    bool force = false;
 
-    internal override void open(File[] files, string hint) {
+    [CCode (array_null_terminated = true)]
+    string[] tty_path = {};
+
+    internal override void activate() {
         // we use a 64 bit int to make dealing with GLib's command line
-        // parser a little easier
+        // parser a little easier, since it only supports signed values
         if (num_bytes > 0xFFFFFF)
             error(@"Can't read more than $(0xFFFFFF) bytes over SPI");
+        else if (num_bytes < 1)
+            error("--n must be greater than 0");
 
-        if (files.length != 1)
+        if (tty_path.length < 1)
+            error("You must provide the TTY to open");
+        if (tty_path.length > 1)
             error("Please provide only one TTY path");
 
         TTY tty;
         try {
-            tty = new TTY(files[0]);
+            tty = new TTY(tty_path[0]);
         } catch (IOError e) {
             error(e.message);
         }
@@ -55,7 +65,7 @@ class app : Application {
 
         var transfer = new Transfer(tty);
         this.hold();
-        transfer.do_transfer.begin(stream, (uint32) num_bytes,
+        transfer.do_transfer.begin(stream, (uint32) (num_bytes & 0xFFFFFFF),
             (obj, res) => {
                 try {
                     transfer.do_transfer.end(res);
@@ -66,25 +76,24 @@ class app : Application {
             });
     }
 
-    internal override void activate() {
-        error("You must provide the TTY to open");
-    }
+    SpiDump() {
+        Object(flags: ApplicationFlags.NON_UNIQUE);
 
-    app() {
-        Object(flags: ApplicationFlags.HANDLES_OPEN);
-
-        var opts = new OptionEntry[4];
-        opts[0] = {"force", 'f', 0, OptionArg.NONE, ref force,
-            "Don't ask whether overwriting the output file is okay"};
-        opts[1] = {"num", 'n', 0, OptionArg.INT64, ref num_bytes,
-            "Number of bytes to read from the tty", num_bytes.to_string()};
-        opts[2] = {"output", 'o', 0, OptionArg.FILENAME, ref output_path,
-            "File to write the output into", output_path};
-        opts[3] = {(string) null};
+        var opts = new OptionEntry[5];
+        // hard-code "128" since some sort of buffer overrun was happening
+        opts[0] = {"num", 'n', 0, OptionArg.INT64, ref num_bytes,
+            "Number of bytes to read from the tty", "128"};
+        opts[1] = {"output", 'o', 0, OptionArg.FILENAME, ref output_path,
+            "Output file path", output_path};
+        opts[2] = {"force", 'f', 0, OptionArg.NONE, ref force,
+            "Overwrite output file"};
+        opts[3] = {OPTION_REMAINING, 0, 0, OptionArg.FILENAME_ARRAY,
+            ref tty_path};
+        opts[4] = {(string) null};
         this.add_main_option_entries(opts);
     }
 
     public static int main(string[] args) {
-        return new app().run(args);
+        return new SpiDump().run(args);
     }
 }

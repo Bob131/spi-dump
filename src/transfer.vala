@@ -12,17 +12,12 @@ class TTY : Object {
     public InputStream @in {construct; get;}
     public OutputStream @out {construct; get;}
 
-    public TTY(File tty) throws IOError {
-        if (tty.get_path() == null)
-            throw new IOError.FAILED("'%s' is not a local path",
-                tty.get_uri());
-
-        var tty_fd = Posix.open((!) tty.get_path(), Posix.O_RDWR);
+    public TTY(string tty_path) throws IOError {
+        var tty_fd = Posix.open((!) tty_path, Posix.O_RDWR);
         if (tty_fd == -1)
-            throw ioerror("Failed to open TTY '%s'", (!) tty.get_path());
+            throw ioerror("Failed to open TTY '%s'", tty_path);
         if (!Posix.isatty(tty_fd))
-            throw new IOError.FAILED("File '%s' is not a TTY",
-                (!) tty.get_path());
+            throw new IOError.FAILED("File '%s' is not a TTY", tty_path);
 
         Posix.termios termios;
         if (Posix.tcgetattr(tty_fd, out termios) == -1)
