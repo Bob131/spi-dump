@@ -1,6 +1,8 @@
 bin_PROGRAMS = spi-dump
 
 spi_dump_SOURCES = \
+	progress.vala \
+	tty.vala \
 	transfer.vala \
 	spi-dump.vala
 spi_dump_VALAFLAGS = $(spi_dump_U_VALAFLAGS)
