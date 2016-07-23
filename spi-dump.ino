@@ -1,6 +1,5 @@
 #include <SPI.h>
 
-#define SPI_READ_CMD 0x03
 #define CS_PIN 10
 
 #define CMD_PREFIX 0xff
@@ -21,10 +20,14 @@ void loop() {
         if (input == CMD_PREFIX) {
             while (Serial.available() == 0) {}
             byte cmd = Serial.read();
-            if (cmd == CS_PULL_LOW)
-                digitalWrite(CS_PIN, LOW);
-            else if (cmd == CS_PULL_HIGH)
-                digitalWrite(CS_PIN, HIGH);
+            switch (cmd) {
+                case CS_PULL_LOW:
+                    digitalWrite(CS_PIN, LOW);
+                    break;
+                case CS_PULL_HIGH:
+                    digitalWrite(CS_PIN, HIGH);
+                    break;
+            }
             if (cmd != CMD_PREFIX) {
                 Serial.write(cmd xor 0xff);
                 return;
