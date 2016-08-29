@@ -55,3 +55,5 @@ Makefile.in
 
 *.bin
 src/spi-dump
+test/tty.vala
+test/mock-arduino

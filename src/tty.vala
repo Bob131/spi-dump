@@ -26,13 +26,7 @@ class TTY : Object {
     public InputWrap @in {construct; get;}
     public OutputStream @out {construct; get;}
 
-    public TTY(string tty_path) throws IOError {
-        var tty_fd = Posix.open((!) tty_path, Posix.O_RDWR);
-        if (tty_fd == -1)
-            throw ioerror("Failed to open TTY '%s'", tty_path);
-        if (!Posix.isatty(tty_fd))
-            throw new IOError.FAILED("File '%s' is not a TTY", tty_path);
-
+    public TTY.from_fd(int tty_fd) throws IOError {
         Posix.termios termios;
         if (Posix.tcgetattr(tty_fd, out termios) == -1)
             throw ioerror("Failed getting TTY settings");
@@ -44,5 +38,15 @@ class TTY : Object {
 
         Object(@in: new InputWrap(new UnixInputStream(tty_fd, false)),
             @out: new UnixOutputStream(tty_fd, false));
+    }
+
+    public TTY(string tty_path) throws IOError {
+        var tty_fd = Posix.open((!) tty_path, Posix.O_RDWR);
+        if (tty_fd == -1)
+            throw ioerror("Failed to open TTY '%s'", tty_path);
+        if (!Posix.isatty(tty_fd))
+            throw new IOError.FAILED("File '%s' is not a TTY", tty_path);
+
+        TTY.from_fd(tty_fd);
     }
 }

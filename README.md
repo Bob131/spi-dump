@@ -68,6 +68,18 @@ sudo make install
 spi-dump -o my_dump.bin -n 0xffff /dev/ttyUSB0
 ```
 
+### Testing
+
+If you want to mess with things without working on real hardware, there's a test
+application that mocks the Arduino:
+
+```
+make check
+test/mock-arduino
+```
+
+This will print out a PTY path that you can then use with spi-dump.
+
 ## "This is broken"
 
 Some stuff to be weary of:

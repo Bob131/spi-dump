@@ -1,5 +1,5 @@
 AM_MAKEFLAGS = --no-print-directory
 
-SUBDIRS = src
+SUBDIRS = src test
 
 EXTRA_DIST = autogen.sh
