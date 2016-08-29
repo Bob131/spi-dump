@@ -51,8 +51,8 @@ easier. As such, spi-dump provides a progress meter with the standard bells and
 whistles to tell you that, yes, that transfer really is going to take three
 hours.
 
-It's a little spartan, being driven by printf padding and `\r`, but it works
-alright for the time being.
+The progress meter is done using an in-tree copy of
+https://github.com/doches/progressbar
 
 ## "How do I use this?"
 

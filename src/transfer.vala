@@ -1,3 +1,7 @@
+string seconds_to_readable(double seconds) {
+    return "%.0fm%02.0fs".printf(Math.floor(seconds / 60), seconds % 60);
+}
+
 class Transfer : Object {
     public TTY tty {construct; get;}
 
@@ -8,13 +12,13 @@ class Transfer : Object {
 
         var byte = new uint8[1];
         uint32 bytes_read = 0;
-        var progress = new ProgressBar(num_bytes);
+        var progress = new ProgressBar("", num_bytes);
         var read_count = 0;
         var checksum_fails = 0;
 
         try {
             while (bytes_read < num_bytes) {
-                progress.status = "Downloading";
+                progress.update_label("Downloading");
 
                 assert (bytes_read < 0xFFFFFF);
 
@@ -61,21 +65,22 @@ class Transfer : Object {
                         ZLib.Utility.crc32(ZLib.Utility.crc32(), buffer);
                     if (checksum == 0) {
                         checksum = current_checksum;
-                        progress.status = "Verifying";
+                        progress.update_label("Verifying");
                     } else if (current_checksum == checksum) {
                         break;
                     } else {
                         checksum_fails++;
                         checksum = 0;
-                        progress.status = "Redownloading (CRC mismatch)";
+                        progress.update_label("Redownloading (CRC mismatch)");
                     }
                 }
 
                 bytes_read += buffer.length;
-                progress.bytes_read = bytes_read;
+                progress.update(bytes_read);
                 stream.write_bytes_async.begin(new Bytes.take(buffer));
             }
-            stderr.printf("\nDone! (%s)\n", progress.elapsed);
+            stderr.printf("\nDone! (%s)\n",
+                seconds_to_readable(time_t() - progress.start));
             stderr.printf(
                 "Read %u byte%s in %d read%s, including %d retr%s\n",
                 bytes_read, bytes_read == 1 ? "" : "s",

@@ -1,4 +1,4 @@
-AC_INIT([spi-dump], [0.1])
+AC_INIT([spi-dump], [0.2])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
@@ -23,11 +23,12 @@ PKG_CHECK_MODULES(spi_dump_U, [
   gio-2.0 >= $GLIB_REQUIRED
   gio-unix-2.0 >= $GLIB_REQUIRED
   zlib
+  ncurses
 ])
 
 AC_SUBST([spi_dump_U_VALAFLAGS], ["--pkg gio-2.0 \
           --pkg gio-unix-2.0 \
-          --pkg posix --pkg linux \
+          --pkg posix \
           --pkg zlib \
           --target-glib=$GLIB_REQUIRED \
           --fatal-warnings \

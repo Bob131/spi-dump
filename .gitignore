@@ -55,5 +55,6 @@ Makefile.in
 
 *.bin
 src/spi-dump
+!src/progressbar/progressbar.c
 test/tty.vala
 test/mock-arduino

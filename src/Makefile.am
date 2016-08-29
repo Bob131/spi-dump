@@ -1,7 +1,8 @@
 bin_PROGRAMS = spi-dump
 
 spi_dump_SOURCES = \
-	progress.vala \
+	progressbar/progressbar.c \
+	progressbar/progressbar.vapi \
 	tty.vala \
 	transfer.vala \
 	spi-dump.vala
@@ -12,7 +13,9 @@ spi_dump_LDADD = \
 	$(spi_dump_U_LIBS)
 
 CLEANFILES = \
-	$(spi_dump_SOURCES:%.vala=%.c) \
+	tty.c \
+	transfer.c \
+	spi-dump.c \
 	*.stamp \
 	*.stamp-t
 
