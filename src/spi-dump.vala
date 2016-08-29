@@ -5,7 +5,7 @@ extern const string OPTION_REMAINING;
 [PrintfFormat]
 void error(string message, ...) {
     stderr.printf("** ERROR: %s\n", message.vprintf(va_list()));
-    Posix.exit(1);
+    Posix.exit(Posix.EXIT_FAILURE);
 }
 
 class SpiDump : Application {
