@@ -1,12 +1,7 @@
-[CCode (cname = "g_io_error_from_errno", type = "GIOErrorEnum")]
-extern int ioerr_from_errno(int err_no);
-
 [PrintfFormat]
 IOError ioerror(string message, ...) {
-    return (IOError) new Error(IOError.quark(),
-        ioerr_from_errno(Posix.errno),
-        "%s: %s".printf(message.vprintf(va_list()),
-        Posix.strerror(Posix.errno)));
+    return new IOError.FAILED("%s: %s", message.vprintf(va_list()),
+        strerror(errno));
 }
 
 // just provides a convenience function
