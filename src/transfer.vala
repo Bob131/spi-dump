@@ -89,24 +89,30 @@ class Transfer : Object {
         } catch (Error e) {
             throw e;
         } finally {
-            try {
-                // pull chip select high, finishing the transfer
-                yield tty.out.write_async({0xff, 0x2});
-            } catch (IOError e) {
-                warning("Failed toggling CS pin: %s. Please reset your Arduino",
-                    e.message);
-            } finally {
-                SourceFunc cb = do_transfer.callback;
-                if (stream.has_pending()) {
-                    Idle.add((owned) cb);
-                    yield;
-                }
-                try {
-                    yield stream.flush_async();
-                } catch (Error e) {
-                    warning("Failed to flush data to disk: %s", e.message);
-                }
-            }
+            // finally code in a different function so we don't overwrite this
+            // function's GError
+            yield transfer_cleanup(stream);
+        }
+    }
+
+    async void transfer_cleanup(OutputStream stream) {
+        try {
+            // pull chip select high, finishing the transfer
+            yield tty.out.write_async({0xff, 0x2});
+        } catch (IOError e) {
+            warning("Failed toggling CS pin: %s. Please reset your Arduino",
+                e.message);
+        }
+
+        while (stream.has_pending()) {
+            Idle.add(transfer_cleanup.callback);
+            yield;
+        }
+
+        try {
+            yield stream.flush_async();
+        } catch (Error e) {
+            warning("Failed to flush data to disk: %s", e.message);
         }
     }
 
