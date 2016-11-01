@@ -38,8 +38,8 @@ class SpiDump : Application {
 
         var output_file = File.new_for_commandline_arg(output_path);
 
-        var can_overwrite = force;
-        if (!can_overwrite && output_file.query_exists()) {
+        bool can_overwrite;
+        if (!(can_overwrite = force || !output_file.query_exists())) {
             FileInfo info;
             try {
                 info = output_file.query_info(FileAttribute.STANDARD_SIZE, 0);
