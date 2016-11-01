@@ -1,24 +1,41 @@
-string seconds_to_readable(double seconds) {
-    return "%.0fm%02.0fs".printf(Math.floor(seconds / 60), seconds % 60);
+enum TransferStatus {
+    STOPPED,
+    DOWNLOADING,
+    VERIFYING,
+    REDOWNLOADING;
+
+    public string to_string() {
+        switch (this) {
+            case STOPPED:
+                return "Stopped";
+            case DOWNLOADING:
+                return "Downloading";
+            case VERIFYING:
+                return "Verifying";
+            case REDOWNLOADING:
+                return "Redownloading (CRC mismatch)";
+            default:
+                assert_not_reached();
+        }
+    }
 }
 
 class Transfer : Object {
     public TTY tty {construct; get;}
+    public TransferStatus status {private set; get;}
+
+    public uint bytes_read {private set; get;}
+    public uint read_count {private set; get;}
+    public uint checksum_fails {private set; get;}
 
     public async void do_transfer(OutputStream stream, uint32 num_bytes)
         throws Error
     {
-        message("Beginning SPI transfer...");
-
-        var byte = new uint8[1];
-        uint32 bytes_read = 0;
-        var progress = new ProgressBar("", num_bytes);
-        var read_count = 0;
-        var checksum_fails = 0;
-
         try {
+            var byte = new uint8[1];
+
             while (bytes_read < num_bytes) {
-                progress.update_label("Downloading");
+                status = TransferStatus.DOWNLOADING;
 
                 assert (bytes_read < 0xFFFFFF);
 
@@ -65,33 +82,26 @@ class Transfer : Object {
                         ZLib.Utility.crc32(ZLib.Utility.crc32(), buffer);
                     if (checksum == 0) {
                         checksum = current_checksum;
-                        progress.update_label("Verifying");
+                        status = TransferStatus.VERIFYING;
                     } else if (current_checksum == checksum) {
                         break;
                     } else {
                         checksum_fails++;
                         checksum = 0;
-                        progress.update_label("Redownloading (CRC mismatch)");
+                        status = TransferStatus.REDOWNLOADING;
                     }
                 }
 
                 bytes_read += buffer.length;
-                progress.update(bytes_read);
                 stream.write_bytes_async.begin(new Bytes.take(buffer));
             }
-            stderr.printf("\nDone! (%s)\n",
-                seconds_to_readable(time_t() - progress.start));
-            stderr.printf(
-                "Read %u byte%s in %d read%s, including %d retr%s\n",
-                bytes_read, bytes_read == 1 ? "" : "s",
-                read_count, read_count == 1 ? "" : "s",
-                checksum_fails, checksum_fails == 1 ? "y" : "ies");
         } catch (Error e) {
             throw e;
         } finally {
             // finally code in a different function so we don't overwrite this
             // function's GError
             yield transfer_cleanup(stream);
+            status = TransferStatus.STOPPED;
         }
     }
 

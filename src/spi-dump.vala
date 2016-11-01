@@ -63,17 +63,36 @@ class SpiDump : Application {
             error("Failed to create '%s': %s", output_path, e.message);
         }
 
+        var num_bytes_truncated = (uint32) (num_bytes & 0xFFFFFFF);
+
         var transfer = new Transfer(tty);
+        var progress = new ProgressBar("", num_bytes_truncated);
+
+        transfer.notify["bytes-read"].connect(
+            () => progress.update(transfer.bytes_read));
+        transfer.notify["status"].connect(
+            () => progress.update_label(transfer.status.to_string()));
+
         this.hold();
-        transfer.do_transfer.begin(stream, (uint32) (num_bytes & 0xFFFFFFF),
-            (obj, res) => {
-                try {
-                    transfer.do_transfer.end(res);
-                } catch (Error e) {
-                    warning(e.message);
-                }
-                this.release();
-            });
+        transfer.do_transfer.begin(stream, num_bytes_truncated, (obj, res) => {
+            try {
+                transfer.do_transfer.end(res);
+
+                var seconds = time_t() - progress.start;
+                stderr.printf("\nDone! (%.0fm%02.0fs)\n",
+                    Math.floor(seconds / 60), seconds % 60);
+
+                stderr.printf(
+                    "Read %u byte%s in %u read%s, including %u retr%s\n",
+                    transfer.bytes_read, transfer.bytes_read == 1 ? "" : "s",
+                    transfer.read_count, transfer.read_count == 1 ? "" : "s",
+                    transfer.checksum_fails,
+                    transfer.checksum_fails == 1 ? "y" : "ies");
+            } catch (Error e) {
+                warning(e.message);
+            }
+            this.release();
+        });
     }
 
     SpiDump() {
