@@ -22,7 +22,7 @@ class SpiDump : Application {
         if (num_bytes > 0xFFFFFF)
             error(@"Can't read more than $(0xFFFFFF) bytes over SPI");
         else if (num_bytes < 1)
-            error("--n must be greater than 0");
+            error("-n must be greater than 0");
 
         if (tty_path.length < 1)
             error("You must provide the TTY to open");
@@ -88,7 +88,7 @@ class SpiDump : Application {
         opts[2] = {"force", 'f', 0, OptionArg.NONE, ref force,
             "Overwrite output file"};
         opts[3] = {OPTION_REMAINING, 0, 0, OptionArg.FILENAME_ARRAY,
-            ref tty_path};
+            ref tty_path, "", "TTY"};
         opts[4] = {(string) null};
         this.add_main_option_entries(opts);
     }
