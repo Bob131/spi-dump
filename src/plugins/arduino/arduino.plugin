@@ -1,0 +1,4 @@
+[Plugin]
+Name=arduino
+Module=arduino
+Description=Simple serial protocol with Ardiuno sketch

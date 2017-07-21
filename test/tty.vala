@@ -47,6 +47,6 @@ class TTY : Object {
         if (!Posix.isatty(tty_fd))
             throw new IOError.FAILED("File '%s' is not a TTY", tty_path);
 
-        TTY.from_fd(tty_fd);
+        this.from_fd(tty_fd);
     }
 }
