@@ -10,6 +10,8 @@ AM_PROG_VALAC([0.28])
 AM_PROG_CC_C_O
 
 CFLAGS="$CFLAGS -w"
+AC_PROG_LN_S
+
 
 dnl ###########################################################################
 dnl Dependencies
